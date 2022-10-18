@@ -1,4 +1,3 @@
-
 import time
 import csv
 
@@ -22,7 +21,7 @@ def find_path(starting_node, cost_sum, visited):
         if starting_node == i:
             continue
         if routes[1] < cost_sum:
-            continue
+            break
         if i not in visited:
             find_path(i, cost_sum, list(visited))
 
@@ -55,33 +54,39 @@ def menu():
             print(f"Route: {routes[0]}, Suma: {routes[1]}\n")
             menu()
         case "2":
-            f = open("Bf\wyniki.csv", 'w')
+            f = open("wyniki.csv", 'w')
             writer = csv.writer(f)
+            writer.writerow(["Plik","Czas[s]","Sciezka"])
 
             # 6
             nodes = config_import("6_1.txt")
             data = benchmark(100)
-            writer.writerow([10, data])
+            writer.writerow(["6_1.txt", data,routes[0]])
 
             # 10
             nodes = config_import("10.txt")
-            data = benchmark(10)
-            writer.writerow([10, data])
+            data = benchmark(100)
+            writer.writerow(["10.txt", data,routes[0]])
 
             # 12
             nodes = config_import("12.txt")
-            data = benchmark(1)
-            writer.writerow([12, data])
+            data = benchmark(20)
+            writer.writerow(["12.txt", data,routes[0]])
 
             # 13
             nodes = config_import("13.txt")
-            data = benchmark(1)
-            writer.writerow([13, data])
+            data = benchmark(10)
+            writer.writerow(["13.txt", data,routes[0]])
 
             # 14
             nodes = config_import("14.txt")
+            data = benchmark(4)
+            writer.writerow(["14.txt", data,routes[0]])
+
+            #15 
+            nodes = config_import("15.txt")
             data = benchmark(1)
-            writer.writerow([14, data])
+            writer.writerow(["15.txt",data,routes[0]])
 
         case _:
             menu()
