@@ -1,2 +1,8 @@
 build/
 dist/
+Include/
+Lib/
+Scripts/
+main.spec
+pyvenv.cfg
+example.py
