@@ -1,4 +1,6 @@
 import itertools
+import time
+import csv
 
 
 def config_import(file):
@@ -113,11 +115,70 @@ def menu():
         case "1":
             file = input("Podaj nazwe pliku (wraz z .txt)\n")
             nodes = better_config(file)
-            global routes
-            routes = [0, 999999]
+            print(nodes)
             cost, route = karp(nodes)
             print(f"Route: {route}, Suma: {cost}\n")
             menu()
+        case "2":
+            f = open("wyniki.csv", 'w')
+            writer = csv.writer(f,delimiter=";")
+            writer.writerow(["Plik","Czas[s]","Sciezka","Koszt"])
+
+            # 6
+            nodes = config_import("6_1.txt")
+            data,cost,route = benchmark(100)
+            writer.writerow(["6_1.txt", data,route,cost])
+            print("Done: 6")
+
+            # 10
+            nodes = config_import("10.txt")
+            data,cost,route = benchmark(100)
+            writer.writerow(["10.txt", data,route,cost])
+            print("Done: 10")
+            # 12
+            nodes = config_import("12.txt")
+            data,cost,route = benchmark(100)
+            writer.writerow(["12.txt", data,route,cost])
+            print("Done: 12")
+
+            # 13
+            nodes = config_import("13.txt")
+            data,cost,route = benchmark(100)
+            writer.writerow(["13.txt", data,route,cost])
+            print("Done: 13")
+
+            # 14
+            nodes = config_import("14.txt")
+            data,cost,route = benchmark(100)
+            writer.writerow(["14.txt", data,route,cost])
+            print("Done: 14")
+
+            #15 
+            nodes = config_import("15.txt")
+            data,cost, route = benchmark(100)
+            writer.writerow(["15.txt", data,route,cost])
+            print("Done: 15")
+
+            #17
+            nodes = better_config("17.txt")
+            data,cost, route = benchmark(100)
+            writer.writerow(["17.txt", data,route,cost])
+            print("Done: 17")
+
+            #21
+            nodes = better_config("21.txt")
+            data,cost,route = benchmark(1)
+            writer.writerow(["21.txt", data,route,cost])
+            print("Done: 21")
+        case "3":
+            #21
+            f = open("wyniki.csv", 'w')
+            writer = csv.writer(f,delimiter=";")
+            writer.writerow(["Plik","Czas[s]","Sciezka","Koszt"])
+            nodes = better_config("21.txt")
+            data,cost,route = benchmark(1)
+            writer.writerow(["21.txt", data,route,cost])
+            print("Done: 21")
         case _:
             file = "6_1.txt"
             nodes = better_config(file)
@@ -125,10 +186,15 @@ def menu():
             cost, route = karp(nodes)
             print(f"Route: {route}, Suma: {cost}\n")
             menu()
-            menu()
 
 def benchmark(sample):
-    pass
+    data = 0
+    for i in range(sample):
+        start_time = time.time()
+        cost, route = karp(nodes)
+        end_time = time.time() - start_time
+        data += end_time
+    return data/sample, cost, route
 
 
 if __name__ == '__main__':
