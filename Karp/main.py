@@ -139,6 +139,5 @@ def benchmark(sample):
 
 
 if __name__ == '__main__':
-    get_ini()
     menu()
     input("Zakończono działanie programu")
