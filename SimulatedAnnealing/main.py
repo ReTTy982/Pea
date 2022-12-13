@@ -1,5 +1,6 @@
 import math
 import decimal
+from pathlib import Path
 import random
 from typing import DefaultDict
 INT_MAX = 2147483647
@@ -171,6 +172,8 @@ def get_ini():
 
 
 def better_config(file):
+    folder = Path('Dane')
+    file = folder / file
     with open(f"{file}", 'r') as f:
         t = int(f.readline().strip())
         l = []
@@ -180,6 +183,7 @@ def better_config(file):
         column = 0
         liczba = ""
         read = f.read()
+        read = ' '.join(read.split())
         for i in read:
             if i == " " or i == "\n":
                 l[row].append(int(liczba))
@@ -195,18 +199,11 @@ def better_config(file):
 
 
 
-def calculate_route(route, matrix):
-    sum = 0
-    previous = route[-1]
-    for i in range(len(matrix)):
-        sum += matrix[previous][route[i]]
-        previous = route[i]
-    return sum
 
 
 if __name__ == '__main__':
-    nodes = better_config("33.txt")
+    nodes = better_config("gr24.tsp")
 
     x = Wyrzazanie(0.99,0.000000001,4000)
-    x.run_algorythm(nodes,3)
+    x.run_algorythm(nodes,0)
     
