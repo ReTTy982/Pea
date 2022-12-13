@@ -1,71 +1,83 @@
 import math
+import decimal
 import random
 from typing import DefaultDict
 INT_MAX = 2147483647
 
+
 class Wyrzazanie():
-    def __init__(self,alpha,temperature):
-        self.temperature = temperature
+    def __init__(self, alpha, stop_temperature,epoch):
+        self.temperature = None
         self.alpha = alpha
-        self.best_route = []
+        self.best_route = None
+        self.best_sum = INT_MAX
         self.stop_i = 10000
+        self.stop_temperature = stop_temperature
+        self.i = 1
+        self.epoch = epoch
+
+    def start_temperature(self,sum,vertex):
+        self.temperature = sum*vertex
+        
         
 
-    def start_solution(self,matrix,starting_point):
+
+    def start_solution(self, matrix, starting_point):
         sum = 0
         counter = 0
         j = 0
         i = 0
         min = INT_MAX
         visitedRouteList = DefaultDict(int)
-        
-    
+
         # Starting from the 0th indexed
         # city i.e., the first city
         visitedRouteList[starting_point] = 1
         route = [0] * len(matrix)
 
-    
         # Traverse the adjacency
         # matrix tsp[][]
         while i < len(matrix) and j < len(matrix[i]):
 
-    
             # Corner of the Matrix
             if counter >= len(matrix[i]) - 1:
                 break
-    
+
             # If this path is unvisited then
             # and if the cost is less then
             # update the cost
             if j != i and (visitedRouteList[j] == 0):
                 if matrix[i][j] < min:
                     min = matrix[i][j]
-                    route[counter] = j # oryginal
-    
+                    route[counter] = j  # oryginal
+
             j += 1
-    
+
             # Check all paths from the
             # ith indexed city
             if j == len(matrix[i]):
                 sum += min
                 min = INT_MAX
-                visitedRouteList[route[counter]] = 1 #tutaj 
+                visitedRouteList[route[counter]] = 1  # tutaj
                 j = 0
-                i = route[counter] # tutaj 
+                i = route[counter]  # tutaj
                 counter += 1
-    
+
         # Update the ending city in array
         # from city which was last visited
         i = route[counter - 1]
         min = matrix[i][starting_point]
         route[counter] = starting_point
         sum += min
-    
+        self.best_route = route
+        self.best_sum = sum
+        self.current_route = route 
+        self.current_sum = sum
+
         # Started from the node where
         # we finished as well.
-        print("Minimum Cost is :", sum)
-        return route, sum
+        print("Minimum Cost is :", sum, route)
+        
 
     def nearest_neighbour(self):
         pass
@@ -73,14 +85,76 @@ class Wyrzazanie():
     def distance(self):
         pass
 
-    def inverse_solution(self,matrix):
-        pass
-    
-    def probability(self):
-        pass
+    def inverse_solution(self, solution):
+        node_one = random.choice(solution)
+        new_list = list(filter(lambda ver: ver != node_one, solution))
+        node_two = random.choice(new_list)
+        solution[min(node_one, node_two):max(node_one, node_two)] = solution[min(
+        node_one, node_two):max(node_one, node_two)][::-1]
+
+        return solution
+
+    def probability_accept(self, candidate_sum):
+        delta = candidate_sum - self.current_sum
+        return math.exp(-(delta) / self.temperature)
+
+    def cooldown(self):
+        self.temperature *= self.alpha
+
+    def accept(self, candidate,matrix):
+        
+        candidate_sum = self.calculate_route(candidate,matrix)
+        test = self.best_route
+
+
+        if candidate_sum < self.current_sum:
+            self.current_sum = candidate_sum
+            self.current_route = candidate
+            if candidate_sum < self.best_sum:
+                print(f"ZMIENIONO SUME Z {self.best_sum} na {candidate_sum} Lepszy Route: {candidate}")
+                self.best_sum = candidate_sum
+                self.best_route = candidate      
+        else:
+            x = random.random()
+            y = self.probability_accept(candidate_sum)
+            if x < y:
+                self.current_sum = candidate_sum
+                self.current_route = candidate
+
+    def calculate_route(self, route, matrix):
+        sum = 0
+        previous = route[-1]
+        for i in range(len(matrix)):
+            sum += matrix[previous][route[i]]
+            previous = route[i]
+        return sum
+
+    def run_algorythm(self, matrix, starting_poing):
+        self.start_solution(matrix, starting_poing)
+        self.start_temperature(self.current_sum,len(self.current_route))
+        while self.temperature >= self.stop_temperature and self.i < self.stop_i:
+            for i in range(self.epoch):
+                old_candidate = list(self.current_route)
+
+                candidate = self.inverse_solution(old_candidate)
+
+                self.accept(candidate,matrix)
+            self.cooldown()
+
+            self.i += 1
+                
+
+            
+            
+            
+
+        
+        print(f'Sciezka: {self.best_route}\n Suma {self.best_sum}')
+        
 
 
 # Czytanie pliku ini
+
 def get_ini():
     tsp = {}
     with open("config.ini", 'r') as f:
@@ -118,17 +192,10 @@ def better_config(file):
                 liczba += i
         return l
 
-def inverse(state):
-    "Inverses the order of cities in a route between node one and node two"
-   
-    node_one = random.choice(state)
-    new_list = list(filter(lambda city: city != node_one, state)) #route without the selected node one
-    node_two = random.choice(new_list)
-    state[min(node_one,node_two):max(node_one,node_two)] = state[min(node_one,node_two):max(node_one,node_two)][::-1]
-    
-    return state
 
-def calculate_route(route,matrix):
+
+
+def calculate_route(route, matrix):
     sum = 0
     previous = route[-1]
     for i in range(len(matrix)):
@@ -136,15 +203,10 @@ def calculate_route(route,matrix):
         previous = route[i]
     return sum
 
+
 if __name__ == '__main__':
-   nodes=  better_config("6_1.txt")
+    nodes = better_config("33.txt")
 
-   x= Wyrzazanie()
-   route,sum = x.start_solution(nodes,0)
-   print(route)
-   print(sum)
-   y = inverse(route)
-   z = calculate_route(y,nodes)
-
-   print(y)
-   print(z)
+    x = Wyrzazanie(0.99,0.000000001,4000)
+    x.run_algorythm(nodes,3)
+    
