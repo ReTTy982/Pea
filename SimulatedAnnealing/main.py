@@ -16,9 +16,9 @@ class Wyrzazanie():
         self.best_route = None
         self.best_sum = INT_MAX
         self.stop_i = 10000
-        self.stop_time = stop_time # czas podany w sekundach 
+        self.stop_time = stop_time * 60 # czas podany w sekundach 
         self.stop_temperature = 10 ** (-stop_temperature) # stop_temperature to ilosc miejsc po przecinku 
-        self.i = 1
+        self.i = 0
         self.epoch = epoch
         self.matrix = matrix
         self.starting_point = starting_point
@@ -85,11 +85,6 @@ class Wyrzazanie():
         # we finished as well.
         print("Minimum Cost is :", sum, route)
 
-    def nearest_neighbour(self):
-        pass
-
-    def distance(self):
-        pass
 
     def inverse_solution(self, solution):
         node_one = random.choice(solution)
@@ -100,6 +95,12 @@ class Wyrzazanie():
 
         return solution
 
+    def swap_solution(self,solution):
+        index = range(len(solution))
+        i1,i2 = random.sample(index,2)
+        solution[i1],solution[i2] = solution[i2], solution[i1]
+        return solution
+
     def probability_accept(self, candidate_sum):
         delta = candidate_sum - self.current_sum
         return math.exp(-(delta) / self.temperature)
@@ -107,6 +108,10 @@ class Wyrzazanie():
     def cooldown_geo(self):
         self.temperature *= self.alpha
        # print(f"Temperatura: {self.temperature:.9f}",end="\r")
+    
+    def cooldown_log(self):
+        self.temperature = self.temperature / math.log(self.i)
+        print(f"Temperatura: {self.temperature:.9f}",end="\r")
 
     def accept(self, candidate):
 
@@ -135,22 +140,28 @@ class Wyrzazanie():
             previous = route[i]
         return sum
 
-    def run_algorythm(self,cooling,neighbour_algorithm,start_time):
+    def run_algorythm(self,cooling,neighbor_algorithm,start_time):
         self.start_solution()
         self.start_epoch()
         self.start_temperature(self.current_sum, len(self.current_route))
         while self.temperature >= self.stop_temperature and time.time() - start_time < self.stop_time:
             for i in range(self.epoch):
                 old_candidate = list(self.current_route)
-                candidate = self.inverse_solution(old_candidate)
+                
+                match neighbor_algorithm:
+                    case "inverse":
+                        candidate = self.inverse_solution(old_candidate)
+                    case "swap":
+                        candidate = self.swap_solution(old_candidate)
+
                 self.accept(candidate)
                 print(f"{(time.time() - start_time):.3f} ===  {self.stop_time}",end='\r')
-
+            self.i += self.epoch
             match cooling:
                 case "geo":
                     self.cooldown_geo()
                 case "log":
-                    pass
+                    self.cooldown_log()
             
 
         print(f'Sciezka: {self.best_route}\n Suma {self.best_sum}')
@@ -227,18 +238,14 @@ def better_config(file):
 
 
 if __name__ == '__main__':
-    
-
-    # Wyrzazanie(alpha=0.99,stop_temperature=0.000000000001,epoch=5,stop_time=0,matrix=nodes,starting_point=0).run_algorythm()
-    # x.run_algorythm()
-    # benchmark(5)
 
     files, output, algorithms = get_ini()
     print(f"AAAAAAAAAAAAAAAAAAAAAAA {output}")
     f = open(output, 'w')
     writer = csv.writer(f, delimiter=";")
+    writer.writerow(["Plik", "Czas[s]", "Koszt", "Sciezka"])
     for file_name in files.keys():
-        writer.writerow(["Plik", "Czas[s]", "Koszt", "Sciezka"])
+        
         
         atributes = files[file_name]
         print(atributes)
@@ -258,4 +265,5 @@ if __name__ == '__main__':
             timer_ms, cost, route = benchmark(alpha, stop_temperature, epoch,
                     stop_time, matrix, starting_point,cooling,neighbor)
             writer.writerow([file_name,timer_ms,cost,route])
+        writer.writerow("")
 
