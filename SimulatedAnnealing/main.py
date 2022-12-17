@@ -3,27 +3,32 @@ import decimal
 from pathlib import Path
 import random
 from typing import DefaultDict
+import time
 INT_MAX = 2147483647
 
 
 class Wyrzazanie():
-    def __init__(self, alpha, stop_temperature,epoch):
+    def __init__(self, alpha, stop_temperature,epoch,stop_time,matrix,starting_point):
         self.temperature = None
         self.alpha = alpha
         self.best_route = None
         self.best_sum = INT_MAX
         self.stop_i = 10000
+        self.stop_time = stop_time
         self.stop_temperature = stop_temperature
         self.i = 1
         self.epoch = epoch
+        self.matrix = matrix
+        self.starting_point = starting_point
 
     def start_temperature(self,sum,vertex):
         self.temperature = sum*vertex
         
-        
+    def start_epoch(self):
+        self.epoch *= len(self.matrix)
 
 
-    def start_solution(self, matrix, starting_point):
+    def start_solution(self):
         sum = 0
         counter = 0
         j = 0
@@ -33,30 +38,30 @@ class Wyrzazanie():
 
         # Starting from the 0th indexed
         # city i.e., the first city
-        visitedRouteList[starting_point] = 1
-        route = [0] * len(matrix)
+        visitedRouteList[self.starting_point] = 1
+        route = [0] * len(self.matrix)
 
         # Traverse the adjacency
         # matrix tsp[][]
-        while i < len(matrix) and j < len(matrix[i]):
+        while i < len(self.matrix) and j < len(self.matrix[i]):
 
             # Corner of the Matrix
-            if counter >= len(matrix[i]) - 1:
+            if counter >= len(self.matrix[i]) - 1:
                 break
 
             # If this path is unvisited then
             # and if the cost is less then
             # update the cost
             if j != i and (visitedRouteList[j] == 0):
-                if matrix[i][j] < min:
-                    min = matrix[i][j]
+                if self.matrix[i][j] < min:
+                    min = self.matrix[i][j]
                     route[counter] = j  # oryginal
 
             j += 1
 
             # Check all paths from the
             # ith indexed city
-            if j == len(matrix[i]):
+            if j == len(self.matrix[i]):
                 sum += min
                 min = INT_MAX
                 visitedRouteList[route[counter]] = 1  # tutaj
@@ -67,8 +72,8 @@ class Wyrzazanie():
         # Update the ending city in array
         # from city which was last visited
         i = route[counter - 1]
-        min = matrix[i][starting_point]
-        route[counter] = starting_point
+        min = self.matrix[i][self.starting_point]
+        route[counter] = self.starting_point
         sum += min
         self.best_route = route
         self.best_sum = sum
@@ -101,11 +106,11 @@ class Wyrzazanie():
 
     def cooldown(self):
         self.temperature *= self.alpha
+       # print(f"Temperatura: {self.temperature:.9f}",end="\r")
 
-    def accept(self, candidate,matrix):
+    def accept(self, candidate):
         
-        candidate_sum = self.calculate_route(candidate,matrix)
-        test = self.best_route
+        candidate_sum = self.calculate_route(candidate)
 
 
         if candidate_sum < self.current_sum:
@@ -122,16 +127,17 @@ class Wyrzazanie():
                 self.current_sum = candidate_sum
                 self.current_route = candidate
 
-    def calculate_route(self, route, matrix):
+    def calculate_route(self, route):
         sum = 0
         previous = route[-1]
-        for i in range(len(matrix)):
-            sum += matrix[previous][route[i]]
+        for i in range(len(self.matrix)):
+            sum += self.matrix[previous][route[i]]
             previous = route[i]
         return sum
 
-    def run_algorythm(self, matrix, starting_poing):
-        self.start_solution(matrix, starting_poing)
+    def run_algorythm(self):
+        self.start_solution()
+        self.start_epoch()
         self.start_temperature(self.current_sum,len(self.current_route))
         while self.temperature >= self.stop_temperature and self.i < self.stop_i:
             for i in range(self.epoch):
@@ -139,19 +145,33 @@ class Wyrzazanie():
 
                 candidate = self.inverse_solution(old_candidate)
 
-                self.accept(candidate,matrix)
+                self.accept(candidate)
             self.cooldown()
 
             self.i += 1
-                
-
             
-            
-            
-
-        
         print(f'Sciezka: {self.best_route}\n Suma {self.best_sum}')
+
+    def benchmark(self,sample):
+        data = 0
+        for i in range(sample):
+            start_time = time.time()
+            self.run_algorythm()
+            end_time = time.time() - start_time
+            data += end_time
         
+def benchmark(sample):
+    data = 0
+    for i in range(sample):
+        x = Wyrzazanie(alpha=0.99,stop_temperature=0.000000000001,epoch=5,stop_time=0,matrix=nodes,starting_point=0)
+        start_time = time.time()
+        x.run_algorythm()
+        end_time = time.time()
+        data+= end_time - start_time
+
+def save_data():
+    pass
+
 
 
 # Czytanie pliku ini
@@ -161,7 +181,9 @@ def get_ini():
     with open("config.ini", 'r') as f:
         t = int(f.readline().strip())
         for i in range(t):
+            print(i)
             x = f.readline().strip().split(" ")
+            print(x)
             tsp[x[0]] = x[1]
 
         output = f.readline().strip()
@@ -202,8 +224,11 @@ def better_config(file):
 
 
 if __name__ == '__main__':
-    nodes = better_config("gr24.tsp")
+    nodes = better_config("17.txt")
 
-    x = Wyrzazanie(0.99,0.000000001,4000)
-    x.run_algorythm(nodes,0)
-    
+    #Wyrzazanie(alpha=0.99,stop_temperature=0.000000000001,epoch=5,stop_time=0,matrix=nodes,starting_point=0).run_algorythm()
+    #x.run_algorythm()
+    #benchmark(5)
+    tsp,output = get_ini()
+    print(tsp)
+    print(output)
