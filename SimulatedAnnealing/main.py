@@ -1,5 +1,4 @@
 import math
-import decimal
 from pathlib import Path
 import random
 from typing import DefaultDict
@@ -9,7 +8,7 @@ import re
 INT_MAX = 2147483647
 
 
-class Wyrzazanie():
+class SimulatedAnnealing():
     def __init__(self, alpha, stop_temperature, epoch, stop_time, matrix, starting_point):
         self.temperature = None
         self.alpha = alpha
@@ -81,10 +80,6 @@ class Wyrzazanie():
         self.current_route = route
         self.current_sum = sum
 
-        # Started from the node where
-        # we finished as well.
-        print("Minimum Cost is :", sum, route)
-
 
     def inverse_solution(self, solution):
         node_one = random.choice(solution)
@@ -107,11 +102,9 @@ class Wyrzazanie():
 
     def cooldown_geo(self):
         self.temperature *= self.alpha
-       # print(f"Temperatura: {self.temperature:.9f}",end="\r")
     
     def cooldown_log(self):
         self.temperature = self.temperature / math.log(self.i)
-        print(f"Temperatura: {self.temperature:.9f}",end="\r")
 
     def accept(self, candidate):
 
@@ -122,7 +115,7 @@ class Wyrzazanie():
             self.current_route = candidate
             if candidate_sum < self.best_sum:
                 print(
-                    f"ZMIENIONO SUME Z {self.best_sum} na {candidate_sum} Lepszy Route: {candidate}")
+                    f"ZMIENIONO SUME Z {self.best_sum} na {candidate_sum}")
                 self.best_sum = candidate_sum
                 self.best_route = candidate
         else:
@@ -155,7 +148,7 @@ class Wyrzazanie():
                         candidate = self.swap_solution(old_candidate)
 
                 self.accept(candidate)
-                print(f"{(time.time() - start_time):.3f} ===  {self.stop_time}",end='\r')
+
             self.i += self.epoch
             match cooling:
                 case "geo":
@@ -163,8 +156,6 @@ class Wyrzazanie():
                 case "log":
                     self.cooldown_log()
             
-
-        print(f'Sciezka: {self.best_route}\n Suma {self.best_sum}')
 
     def benchmark(self, sample):
         data = 0
@@ -176,14 +167,14 @@ class Wyrzazanie():
 
 
 def benchmark(alpha, stop_temperature, epoch, stop_time, matrix, starting_point, cooling,neighbour_algorithm):
-    time_ms = 0
-    x = Wyrzazanie(alpha=alpha, stop_temperature=stop_temperature,
+    run_time = 0
+    x = SimulatedAnnealing(alpha=alpha, stop_temperature=stop_temperature,
                    epoch=epoch, stop_time=stop_time, matrix=matrix, starting_point=starting_point)
     start_time = time.time()
     x.run_algorythm(cooling,neighbour_algorithm, start_time)
     end_time = time.time()
-    time_ms += end_time - start_time
-    return time_ms, x.best_sum, x.best_route
+    run_time += end_time - start_time
+    return run_time, x.best_sum, x.best_route
 
 
 # Czytanie pliku ini
@@ -215,7 +206,6 @@ def better_config(file):
     file = folder / file
     with open(f"{file}", 'r') as f:
         t = int(f.readline().strip())
-        print(f" CO TO JEST {t}")
         l = []
         for i in range(t):
             l.append([])
@@ -240,7 +230,6 @@ def better_config(file):
 if __name__ == '__main__':
 
     files, output, algorithms = get_ini()
-    print(f"AAAAAAAAAAAAAAAAAAAAAAA {output}")
     f = open(output, 'w')
     writer = csv.writer(f, delimiter=";")
     writer.writerow(["Plik", "Czas[s]", "Koszt", "Sciezka"])
@@ -248,7 +237,6 @@ if __name__ == '__main__':
         
         
         atributes = files[file_name]
-        print(atributes)
         alpha = float(atributes[0])
         stop_temperature = int(atributes[1])
         epoch = int(atributes[2])
