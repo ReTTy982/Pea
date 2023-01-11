@@ -15,20 +15,26 @@ class AntColony:
         self.evaporation_rate = evaporation_rate
         self.matrix = matrix
 
-        self.pheromone_matrix = None
+        self.pheromone_matrix = []
         self.ants_number = len(matrix)
         self.N = len(matrix)
+        self.colony = []
 
     def init_pheromone(self):
-        tau_zero = self.ants_number
+        tau_zero = self.ants_number / self.init_distance()
+
+        for i in range(self.N):
+            self.pheromone_matrix.append([])
+        for i in range(self.N):
+            for j in range(self.N):
+                self.pheromone_matrix[i].append(tau_zero)
 
     def init_distance(self):
         vertexes = []
         vertexes.extend(range(0, self.N))
         random.shuffle(vertexes)
         cost = self.calculate_cost(vertexes)
-        print(f"Cost: {cost}")
-        return vertexes
+        return cost * self.alpha
 
     def calculate_cost(self, path):
         cost = 0
@@ -38,14 +44,34 @@ class AntColony:
         cost += self.matrix[path[-1]][path[0]]
         return cost
 
-    def run_algorithm(self):
+    def evaporate_pheromone(self):
         pass
 
-    class Ant():
-        def __init__(self):
-            pass
+    def run_algorithm(self, iter):
 
-        def pick_route(self):
+        self.init_pheromone()
+
+        for i in range(self.ants_number):
+            vertexes = []
+            vertexes.extend(range(0, self.N))
+            starting_vertex = random.choice(vertexes)
+            self.colony.append(self.Ant(starting_vertex))
+
+        for iterations in range(iter):  # number of iterations
+            for ant in self.colony:  # number of ants, itereting objects
+                for move in range(self.N):  # number of aviable moves
+                    # Choose vertex
+                    ant.pick_vertex()
+        
+        self.evaporate_pheromone()
+        
+
+    class Ant():
+        def __init__(self, starting_vertex):
+            self.starting_vertex = starting_vertex
+            self.tabu = []
+
+        def pick_vertex(self):
             pass
 
 
@@ -82,12 +108,10 @@ def get_ini():
     tsp = {}
     with open("config.ini", 'r') as f:
         files_nr = int(f.readline().strip())
-        # algorithms = f.readline().strip().split(" ")
         for i in range(files_nr):
             x = f.readline().strip().split(" ")
             tsp[x[0]] = x[1:7]
 
-        # output = f.readline().strip()
         content = f.read()
         output = re.findall(r'#\w+', content)
         output = output[0]
@@ -114,4 +138,4 @@ if __name__ == '__main__':
     for file_name in files.keys():
         matrix = better_config(file_name)
         x = AntColony(alpha, beta, evaporation_rate, matrix)
-        ver = x.init_distance()
+        x.run_algorithm(1)
