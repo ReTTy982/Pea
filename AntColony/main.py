@@ -304,10 +304,11 @@ if __name__ == '__main__':
         matrix = better_config(file_name)
         opt_cost = float(files[file_name][0])
         tries = int(files[file_name][1])
+        iterations = int(files[file_name][2])
         suma = 0
         for i in range(tries):
             kolonia = AntColony(alpha, beta, evaporation_rate, matrix,qvalue)
-            cost_test = kolonia.run_algorithm(100)
+            cost_test = kolonia.run_algorithm(iterations)
             suma += cost_test
             writer.writerow([file_name,"placeholder",cost_test,rotate(kolonia.best_path)])
         print(f"{file_name}: {round((((suma/tries) - opt_cost)/opt_cost)*100,2)}")
