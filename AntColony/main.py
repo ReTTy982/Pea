@@ -36,14 +36,48 @@ class AntColony:
         for i in range(self.N):
             for j in range(self.N):
                 self.pheromone_matrix[i].append(tau_zero)
-
+    
     def init_distance(self):
+        # TODO: Alfa tutaj jest zmieniona
         vertexes = []
         vertexes.extend(range(0, self.N))
         random.shuffle(vertexes)
         cost = self.calculate_path_cost(vertexes)
-        return cost * self.alpha
+        return cost 
+        
+    """
+    def init_distance(self):
+        path = [0]
+        cost = 99999999999
+        index = None
+        for i in range(self.N):
+            if i ==0:
+                vertexes = self.matrix[path[i]].copy()
+            else:
+                vertexes = self.matrix[index].copy()
+            for j in range(len(vertexes)):
+                cost = 99999999999
+                if vertexes[j] > 0  and j not in path:
+                    if vertexes[j] < cost:
+                        cost = vertexes[j]
+                        index = j
+            if len(path) != self.N:
+                path.append(index)
+        total_cost = self.calculate_path_cost(path)
+        print(path)
+        print(total_cost)
+        return total_cost * 0.6
+       """     
 
+                    
+
+            
+
+
+
+
+
+    # SPRAWDZONE
     def calculate_path_cost(self, path):  # Nie wiem co to robi
         cost = 0
         for i in range(self.N-1):
@@ -51,22 +85,19 @@ class AntColony:
         cost += self.matrix[path[-1]][path[0]]
         return cost
 
-    def visibility(self, start, finish) -> int:
-
-        pass
-
-    def calculate_probability(self):  # Mozliwe ze nie trzba
-        pass
 
     def calculate_denominator(self, ant: Ant):
-        denominator = float(0)
+        denominator = 0.0
         atractivness = dict()
         for i in ant.possible_moves:
             pheromone_ammount = float(
                 self.pheromone_matrix[ant.last_visited][i])
             distance = float(matrix[ant.last_visited][i])
+            if distance == 0:
+                distance = 0.00001
             atractivness[i] = pow(
-                pheromone_ammount, self.alpha) * pow(1/distance, self.beta)
+                pheromone_ammount, self.alpha) * pow(1.0/distance, self.beta)
+        
             denominator += atractivness[i]
         
         return denominator, atractivness
@@ -89,28 +120,55 @@ class AntColony:
             
             for i in range(self.N):
                 if i == self.N - 1:
-                    self.pheromone_matrix[ant.tabu[i]][ant.tabu[-1]] = float(self.qas_value / cost)
+                    #self.pheromone_matrix[ant.tabu[i]][ant.tabu[-1]] += float(self.qas_value / cost)
+                    # TODO: DUMMY
+                    a = 0
                 else:
-                    self.pheromone_matrix[ant.tabu[i]][ant.tabu[i+1]] = float(self.qas_value / cost)
+                    self.pheromone_matrix[ant.tabu[i]][ant.tabu[i+1]] += float(self.qas_value / cost)
+            ant.reset() # Clear lists for future iterations
             
 
                 
             
 
-
+    # oryginalne
+    """
     def pick_vertex(self, ant: Ant, denominator: float, atractivness: dict):
         for i in atractivness.keys():
             x = random.random()  # interval [0,1)
             if denominator == 0:
                 denominator = SMALL_FLOAT
+            
             y = atractivness[i] / denominator
             if x < y:
                 ant.pick_vertex(i)
+                #print(f"Mrówka: {ant.id} wybiera {i} ({x} , {y})")
                 return
         # When no path has been chosen
         sorted_list = sorted(atractivness.items(), key=lambda x: x[1])
         
         vertex = sorted_list[0][0]  # (key,value)
+        ant.pick_vertex(vertex)
+    """
+    #Debugowane
+    def pick_vertex(self, ant: Ant, denominator: float, atractivness: dict):
+        sum = 0
+        chance = random.random() # interval (0,1]
+        sorted_list = sorted(atractivness.items(), key=lambda x: x[1]) # sort by value from lowest to highest
+        #for i in atractivness.keys():
+        for struct in sorted_list:
+            i = struct[0]
+            if denominator == 0:
+                denominator = SMALL_FLOAT
+            sum += atractivness[i] / denominator
+            if sum>chance:
+                ant.pick_vertex(i)
+                return
+            else:
+                a = 0 # dummy for debug
+        #sorted_list = sorted(atractivness.items(), key=lambda x: x[1])
+        
+        vertex = sorted_list[-1][0]  # (key,value)
         ant.pick_vertex(vertex)
 
 
@@ -120,15 +178,16 @@ class AntColony:
         vertexes = []
         vertexes.extend(range(0, self.N))
         starting_vertex = random.choice(vertexes)
+        starting_vertex = 0
 
         for i in range(self.ants_number):
-            self.colony.append(self.Ant(starting_vertex,i))
+            starting_vertex = random.choice(vertexes)
+            self.colony.append(self.Ant(i,i))
 
         for iterations in range(iter):  # number of iterations
             for ant_index in range(len(self.colony)):  # number of ants, itereting objects
-
+               
                 ant = self.colony[ant_index]
-                print(ant_index)
                 for move in range(self.N-1) :  # number of aviable moves
                     # If first move potem trzeba bedzie zniszczyc liste
                     if ant.first_move:
@@ -141,6 +200,7 @@ class AntColony:
 
                     # ant.pick_vertex(vertexes)
             self.change_pheromone()
+        return self.min_cost
 
     class Ant():
         def __init__(self, starting_vertex,id):
@@ -149,6 +209,11 @@ class AntColony:
             self.first_move = True
             self.last_visited = starting_vertex  # Moze do usuniecia
             self.id = id # do testowania
+
+        def reset(self):
+            self.tabu = self.tabu[:1]
+            self.first_move = True
+            self.last_visited = self.tabu[0]
 
         # Mozliwe do usuniecia
         """
@@ -166,13 +231,6 @@ class AntColony:
             self.possible_moves.remove(vertex)
             self.last_visited = vertex
 
-        def calculate_denominator(self, pheromone_matrix: list, matrix: list):
-            sum = float(0)
-            for i in self.possible_moves:
-                pheromone_ammount = float(
-                    pheromone_matrix[self.last_visited][i])
-                distance = float(matrix[self.last_visited][i])
-                sum += pow(pheromone_ammount,)
 
 
 def better_config(file):
@@ -223,24 +281,38 @@ def get_ini():
 def benchmark(object: AntColony):
     pass
 
+def rotate(list):
+    for i in range(len(list)):
+        if list[i] == 0:
+            list = list[i:] + list[:i]
+    return list
 
 if __name__ == '__main__':
 
     # For purpose of testing
-    alpha = 1
-    beta = 3
+    alpha = 1.0
+    beta = 3.0
     evaporation_rate = 0.5
-    qvalue = 100
+    qvalue = 100.0
 
     files, output = get_ini()
     f = open(output, 'w')
     writer = csv.writer(f, delimiter=";")
     writer.writerow(["Plik", "Czas[s]", "Koszt", "Sciezka"])
     for file_name in files.keys():
+        writer.writerow([file_name])
         matrix = better_config(file_name)
-        x = AntColony(alpha, beta, evaporation_rate, matrix,qvalue)
-        x.run_algorithm(1)
-        print(f"{x.best_path} , {x.min_cost}")
+        opt_cost = float(files[file_name][0])
+        tries = int(files[file_name][1])
+        suma = 0
+        for i in range(tries):
+            kolonia = AntColony(alpha, beta, evaporation_rate, matrix,qvalue)
+            cost_test = kolonia.run_algorithm(100)
+            suma += cost_test
+            writer.writerow([file_name,"placeholder",cost_test,rotate(kolonia.best_path)])
+        print(f"{file_name}: {round((((suma/tries) - opt_cost)/opt_cost)*100,2)}")
+
+        #print(f"{kolonia.best_path} , {kolonia.min_cost}")
 
 
 # TODO ZEROWANIE LIST BO DZIALA TERAZ TYLKO DLA JEDNEJ ITERACJI
