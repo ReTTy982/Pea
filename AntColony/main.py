@@ -13,7 +13,7 @@ SMALL_FLOAT = 2.2250738585072014e-308
 
 class AntColony:
 
-    def __init__(self, alpha, beta, evaporation_rate, matrix, qas_value):
+    def __init__(self, alpha, beta, evaporation_rate, matrix, qas_value,ants_number):
         self.alpha = alpha
         self.beta = beta
         self.evaporation_rate = evaporation_rate
@@ -21,7 +21,8 @@ class AntColony:
         self.qas_value = qas_value
 
         self.pheromone_matrix = []
-        self.ants_number = len(matrix) # TODO zmienic potem na len(matrix)
+        #self.ants_number = len(matrix) # TODO zmienic potem na len(matrix)
+        self.ants_number = ants_number
         #self.ants_number = 1
         self.N = len(matrix)
         self.colony = []
@@ -43,7 +44,7 @@ class AntColony:
         vertexes.extend(range(0, self.N))
         random.shuffle(vertexes)
         cost = self.calculate_path_cost(vertexes)
-        return cost 
+        return cost  
         
     """
     def init_distance(self):
@@ -182,7 +183,7 @@ class AntColony:
 
         for i in range(self.ants_number):
             starting_vertex = random.choice(vertexes)
-            self.colony.append(self.Ant(i,i))
+            self.colony.append(self.Ant(starting_vertex,i))
 
         for iterations in range(iter):  # number of iterations
             for ant_index in range(len(self.colony)):  # number of ants, itereting objects
@@ -268,7 +269,7 @@ def get_ini():
         files_nr = int(f.readline().strip())
         for i in range(files_nr):
             x = f.readline().strip().split(" ")
-            tsp[x[0]] = x[1:7]
+            tsp[x[0]] = x[1:8]
 
         content = f.read()
         output = re.findall(r'#\w+', content)
@@ -278,8 +279,14 @@ def get_ini():
     return tsp, output
 
 
-def benchmark(object: AntColony):
-    pass
+def benchmark():
+    colony = AntColony(alpha, beta, evaporation_rate, matrix,qvalue,ants_number)
+    start_time = time.time()
+    end_cost = colony.run_algorithm(iterations)
+    end_time = time.time()
+    run_time = end_time - start_time
+    return run_time, end_cost, colony.best_path
+    
 
 def rotate(list):
     for i in range(len(list)):
@@ -287,30 +294,47 @@ def rotate(list):
             list = list[i:] + list[:i]
     return list
 
+
+def set_params(config=None) -> AntColony:
+        # For purpose of testing
+    if config is None:
+        alpha = 1.0
+        beta = 3.0
+        evaporation_rate = 0.5
+        qvalue = 100.0
+    else:
+        pass
+    return AntColony(alpha,beta,evaporation_rate,matrix,qvalue,ants_number)
+
+
 if __name__ == '__main__':
 
-    # For purpose of testing
     alpha = 1.0
     beta = 3.0
     evaporation_rate = 0.5
     qvalue = 100.0
-
     files, output = get_ini()
-    f = open(output, 'w')
+    f = open(output, 'w', newline='')
     writer = csv.writer(f, delimiter=";")
     writer.writerow(["Plik", "Czas[s]", "Koszt", "Sciezka"])
     for file_name in files.keys():
         writer.writerow([file_name])
+
         matrix = better_config(file_name)
         opt_cost = float(files[file_name][0])
         tries = int(files[file_name][1])
         iterations = int(files[file_name][2])
+        alpha = int(files[file_name][3])
+        beta = int(files[file_name][4])
+        evaporation_rate= float(files[file_name][5])
+        qvalue = int(files[file_name][6])
+        ants_number = len(matrix)
+        #ants_number = 14
         suma = 0
         for i in range(tries):
-            kolonia = AntColony(alpha, beta, evaporation_rate, matrix,qvalue)
-            cost_test = kolonia.run_algorithm(iterations)
-            suma += cost_test
-            writer.writerow([file_name,"placeholder",cost_test,rotate(kolonia.best_path)])
+            run_time, end_cost, path = benchmark()
+            suma += end_cost
+            writer.writerow([file_name,run_time,end_cost,rotate(path)])
         print(f"{file_name}: {round((((suma/tries) - opt_cost)/opt_cost)*100,2)}")
 
         #print(f"{kolonia.best_path} , {kolonia.min_cost}")
