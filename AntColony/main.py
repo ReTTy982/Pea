@@ -23,7 +23,7 @@ class AntColony:
         self.pheromone_matrix = []
         #self.ants_number = len(matrix) # TODO zmienic potem na len(matrix)
         self.ants_number = ants_number
-        #self.ants_number = 1
+        #self.ants_number = 10
         self.N = len(matrix)
         self.colony = []
         self.min_cost = 99999999999999999999
@@ -39,7 +39,6 @@ class AntColony:
                 self.pheromone_matrix[i].append(tau_zero)
     
     def init_distance(self):
-        # TODO: Alfa tutaj jest zmieniona
         vertexes = []
         vertexes.extend(range(0, self.N))
         random.shuffle(vertexes)
@@ -78,8 +77,7 @@ class AntColony:
 
 
 
-    # SPRAWDZONE
-    def calculate_path_cost(self, path):  # Nie wiem co to robi
+    def calculate_path_cost(self, path):  
         cost = 0
         for i in range(self.N-1):
             cost += self.matrix[path[i]][path[i+1]]
@@ -151,7 +149,7 @@ class AntColony:
         vertex = sorted_list[0][0]  # (key,value)
         ant.pick_vertex(vertex)
     """
-    #Debugowane
+    
     def pick_vertex(self, ant: Ant, denominator: float, atractivness: dict):
         sum = 0
         chance = random.random() # interval (0,1]
@@ -165,9 +163,6 @@ class AntColony:
             if sum>chance:
                 ant.pick_vertex(i)
                 return
-            else:
-                a = 0 # dummy for debug
-        #sorted_list = sorted(atractivness.items(), key=lambda x: x[1])
         
         vertex = sorted_list[-1][0]  # (key,value)
         ant.pick_vertex(vertex)
@@ -206,10 +201,10 @@ class AntColony:
     class Ant():
         def __init__(self, starting_vertex,id):
             self.tabu = [starting_vertex]  # List of visited vertexes
-            self.possible_moves = None  # List of possible moves. Set upon using pick_vertex()
+            self.possible_moves = None  # List of possible moves.
             self.first_move = True
-            self.last_visited = starting_vertex  # Moze do usuniecia
-            self.id = id # do testowania
+            self.last_visited = starting_vertex  
+            self.id = id # for testing purposes
 
         def reset(self):
             self.tabu = self.tabu[:1]
